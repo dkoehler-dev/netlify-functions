@@ -24,6 +24,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const CONFIG = {
   recipientEmail: process.env.RECIPIENT_EMAIL!,
   fromEmail: process.env.FROM_EMAIL!,
+  fromName: process.env.FROM_NAME || 'PortfolioWebsite',
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || [],
   maxMessageLength: 2000,
   rateLimitWindowMs: 60000, // 1 minute
@@ -40,7 +41,11 @@ const isValidEmail = (email: string): boolean => {
 };
 
 const sanitizeString = (str: string): string => {
-  return str.trim().replace(/[<>]/g, '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .trim();
 };
 
 const checkRateLimit = (clientIP: string): boolean => {
@@ -86,49 +91,74 @@ const validateContactData = (data: any): { isValid: boolean; errors: string[] } 
 };
 
 const createEmailContent = (data: ContactFormData): { subject: string; html: string; text: string } => {
-  const subject = data.subject 
-    ? `Contact Form: ${sanitizeString(data.subject)}`
-    : `New Contact Form Submission from ${sanitizeString(data.name)}`;
+  const subject = data.subject
+    ? `Contact form: ${sanitizeString(data.subject)}`
+    : `New contact from ${sanitizeString(data.name)}`;
 
+  // Use table-based layout and inline styles for cross-client rendering
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
-        New Contact Form Submission
-      </h2>
-      
-      <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>Name:</strong> ${sanitizeString(data.name)}</p>
-        <p><strong>Email:</strong> ${sanitizeString(data.email)}</p>
-        ${data.phone ? `<p><strong>Phone:</strong> ${sanitizeString(data.phone)}</p>` : ''}
-        ${data.company ? `<p><strong>Company:</strong> ${sanitizeString(data.company)}</p>` : ''}
-      </div>
-      
-      <div style="margin: 20px 0;">
-        <h3 style="color: #333; margin-bottom: 10px;">Message:</h3>
-        <div style="background: white; padding: 15px; border-left: 4px solid #007bff; border-radius: 3px;">
-          ${sanitizeString(data.message).replace(/\n/g, '<br>')}
-        </div>
-      </div>
-      
-      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
-        <p>This message was sent via your website contact form on ${new Date().toLocaleString()}.</p>
-      </div>
-    </div>
-  `;
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${subject}</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f5f7;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f4f5f7;">
+      <tr>
+        <td align="center" style="padding:24px 16px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:600px; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(16,24,40,0.1);">
+            <tr>
+              <td style="padding:24px 24px 0 24px;">
+                <h1 style="margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; font-size:20px; line-height:28px; color:#111827;">New contact form submission</h1>
+                <p style="margin:8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:14px; line-height:20px; color:#6b7280;">You received a new message from your website.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px 0 24px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
+                  <tr>
+                    <td style="padding:16px 16px 0 16px;">
+                      <p style="margin:0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:14px; line-height:20px; color:#111827;"><strong style="color:#111827;">Name:</strong> ${sanitizeString(data.name)}</p>
+                      <p style="margin:0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:14px; line-height:20px; color:#111827;"><strong style="color:#111827;">Email:</strong> ${sanitizeString(data.email)}</p>
+                      ${data.phone ? `<p style="margin:0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:14px; line-height:20px; color:#111827;"><strong style=\"color:#111827;\">Phone:</strong> ${sanitizeString(data.phone)}</p>` : ''}
+                      ${data.company ? `<p style="margin:0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:14px; line-height:20px; color:#111827;"><strong style=\"color:#111827;\">Company:</strong> ${sanitizeString(data.company)}</p>` : ''}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 16px 16px 16px;">
+                      <p style="margin:8px 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:14px; line-height:20px; color:#111827;"><strong style="color:#111827;">Subject:</strong> ${data.subject ? sanitizeString(data.subject) : 'Contact form submission'}</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px 24px 24px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:8px;">
+                  <tr>
+                    <td style="padding:12px 16px; background-color:#f9fafb; border-bottom:1px solid #e5e7eb;">
+                      <p style="margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-weight:600; font-size:14px; line-height:20px; color:#111827;">Message</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:16px; background-color:#ffffff;">
+                      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:14px; line-height:22px; color:#111827; white-space:pre-wrap;">${sanitizeString(data.message)}</div>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:16px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; font-size:12px; line-height:18px; color:#6b7280;">Sent on ${new Date().toLocaleString()}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>`;
 
-  const text = `
-New Contact Form Submission
-
-Name: ${data.name}
-Email: ${data.email}
-${data.phone ? `Phone: ${data.phone}` : ''}
-${data.company ? `Company: ${data.company}` : ''}
-
-Message:
-${data.message}
-
-Sent on: ${new Date().toLocaleString()}
-  `;
+  const text = `New contact form submission\n\nName: ${data.name}\nEmail: ${data.email}\n${data.phone ? `Phone: ${data.phone}\n` : ''}${data.company ? `Company: ${data.company}\n` : ''}Subject: ${data.subject || 'Contact form submission'}\n\nMessage:\n${data.message}\n\nSent on: ${new Date().toLocaleString()}`;
 
   return { subject, html, text };
 };
@@ -217,7 +247,7 @@ export const handler: Handler = async (
 
     // Send email via Resend
     const emailResult = await resend.emails.send({
-      from: CONFIG.fromEmail,
+      from: CONFIG.fromName ? `${CONFIG.fromName} <${CONFIG.fromEmail}>` : CONFIG.fromEmail,
       to: CONFIG.recipientEmail,
       subject: emailContent.subject,
       html: emailContent.html,
