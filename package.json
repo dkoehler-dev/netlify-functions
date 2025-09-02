@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Collection of all my Netlify serverless functions",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "netlify dev",
