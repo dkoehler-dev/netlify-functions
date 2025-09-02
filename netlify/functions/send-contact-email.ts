@@ -24,7 +24,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const CONFIG = {
   recipientEmail: process.env.RECIPIENT_EMAIL!,
   fromEmail: process.env.FROM_EMAIL!,
-  fromName: process.env.FROM_NAME || 'PortfolioWebsite',
+  fromName: process.env.FROM_NAME || 'New Message - dominikkoehler.dev',
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || [],
   maxMessageLength: 2000,
   rateLimitWindowMs: 60000, // 1 minute
