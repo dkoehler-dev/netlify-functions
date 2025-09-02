@@ -1,15 +1,10 @@
 [build]
   publish = "."
-  functions = "netlify/functions"
-  command = ""  # no build needed for a static site
-
-[build.environment]
-  NODE_VERSION = "18"
+  command = ""
 
 [functions]
+  directory = "netlify/functions"
   node_bundler = "esbuild"
-  # optional but fine:
-  # external_node_modules = ["resend"]
 
 [[headers]]
   for = "/.netlify/functions/*"

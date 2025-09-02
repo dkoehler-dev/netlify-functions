@@ -1,4 +1,4 @@
-import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import { Resend } from 'resend';
 
 // Type definitions
